@@ -27,7 +27,7 @@ use CGI;
 use LWP;
 use WWW::Mechanize;
 use JSON -support_by_pp;
-
+use HTML::Entities;
 use MediaWiki::API;
 
 use Math::Round;
@@ -42,7 +42,7 @@ sub get_locations {
     my $c = CGI->new;
     my $dbh = DBI->connect("DBI:mysql:database=piperpal;host=piperpal.mysql.domeneshop.no", "piperpal", "xxxxxxxx", {'RaiseError' => 1});
     $dbh->do ("SELECT DISTINCT name,glat,glon FROM yaylocation WHERE paid > '0' ORDER by name;");
-    my $sth = $dbh->prepare ("SELECT DISTINCT name,glat,glon FROM yaylocation WHERE paid > '0' ORDER by name;");
+    my $sth = $dbh->prepare ("SELECT DISTINCT name,glat,glon FROM yaylocation ORDER by name;");
     $sth->execute();
     while (my $ref = $sth->fetchrow_hashref()) {
 	if ('GET' eq $c->request_method && $c->param('locationservicename') && $c->param('location')) {
@@ -62,8 +62,8 @@ sub get_locations {
 sub get_services {
     my $c = CGI->new;
     my $dbh = DBI->connect("DBI:mysql:database=piperpal;host=piperpal.mysql.domeneshop.no", "piperpal", "xxxxxxxx", {'RaiseError' => 1});
-    $dbh->do ("SELECT DISTINCT service,name,glat,glon FROM piperpal WHERE paid > '0' ORDER by service;");
-    my $sth = $dbh->prepare ("SELECT DISTINCT service,name,glat,glon FROM piperpal WHERE paid > '0' ORDER by service;");
+    $dbh->do ("SELECT DISTINCT service,name,glat,glon FROM piperpal ORDER by service;");
+    my $sth = $dbh->prepare ("SELECT DISTINCT service,name,glat,glon FROM piperpal WHERE ORDER by service;");
     $sth->execute();
     if ('GET' eq $c->request_method && $c->param('service')) {
 	while (my $ref = $sth->fetchrow_hashref()) {
@@ -80,24 +80,20 @@ sub get_services {
     return;
 }
 sub input_searchers {
-    my @radiuses = (40075,30000,20000,10000,9000,8000,7000,6000,5000,4000,3000,2500,2000,1500,1250,1000,750,500,250,100,50,25,10,5,2,1);
+    my @radiuses = (1,2,5,10,25,50,100,250,500,750,1000,1250,1500,2000,2500,3000,4000,5000,6000,7000,8000,9000,10000,20000,40075);
     my $r;
     my $sth;
     my $dbh;
     my $c = CGI->new;
     my $servicep;
-    if ($c->param('service')) {                                                          my $servicep = $c->param('service');
-    } else {
-	 my $servicep = "Books";
-    }              
-    print "<form onsubmit='updateGeo()' method='GET' action='https://www.piperpal.com/' id='formID'>";
+    print "<form onsubmit='updateGeo()' method='GET' action='https://www.piperpal.com/#results' id='formID'>";
     print '<table>';
     if ('GET' eq $c->request_method && $c->param('query')) {
-	print '<tr><td><center><input size="30" type="text" autofocus class="input_form_custom" id="query" name="query" placeholder="Enter keyword" value="' . $c->param('query') . '" /></center></td></tr>';
+	print '<tr><td><center><input size="30" type="text" autofocus class="input_form_custom" id="query" name="query" placeholder="Where do you think&quest;" value="' . HTML::Entities::encode($c->param('query')) . '" /></center></td></tr>';
 #	$dbh = DBI->connect("DBI:mysql:database=piperpal;host=piperpal.mysql.domeneshop.no", "piperpal", "xxxxxxxx", {'RaiseError' => 1});                
 #	$dbh->{'mysql_enable_utf8'} = 1;                                           
 #	if ($c->param('query')) {                                                   
-#	    $sth = $dbh->prepare ("SELECT name,location,service FROM piperpal WHERE (name LIKE '%" . $c->param('query') . "%' OR service LIKE '%" . $c->param('query') . "%') AND paid > '0' ORDER by modified DESC;");                                  $sth->execute();                                                        
+#	    $sth = $dbh->prepare ("SELECT name,location,service FROM piperpal WHERE (name LIKE '%" . $c->param('query') . "%' OR service LIKE '%" . $c->param('query') . "%') ORDER by modified DESC;");                                  $sth->execute();                                                        
 #	    while (my $ref = $sth->fetchrow_hashref()) {
 #	       print '<tr><td></td><td>';
 #	       lns_item($ref->{'name'}, $ref->{'location'}, $ref->{'service'}, $ref->{'glat'}, $ref->{'glon'}, $ref->{'modified'}, $ref->{'created'}, $ref->{'distance_in_km'});
@@ -107,14 +103,9 @@ sub input_searchers {
 #:        $sth->finish();
 # $ref->{'name'}, $ref->{'location'}, $ref->{'service'}, $ref->{'glat'}, $ref->{'glon'}, $ref->{'modified'}, $ref->{'created'}, $ref->{'distance_in_km'}
     } else {
-	print '<tr><td><center><input size="30" type="text" class="input_form_custom" id="query" name="query" placeholder="Enter keyword" /></center></td>';
+	print '<tr><td><center><input size="30" type="text" class="input_form_custom" id="query" name="query" placeholder="Where do you think&quest;" /></center></td>';
     }
-    print '</tr><tr><td>';
-    print '<select size="12" id="service" name="service">';
-    # print '<option value="' . $servicep . '" selected>"' . $servicep . '"</option>';
-    print '<option value="Restaurant">Restaurant</option><option value="Bar">Bar</option><option value="Concert">Concert</option><option value="Film">Film</option><option value="Books" selected>Books</option><option value="Health">Health</option><option value="Clothes">Clothes</option><option value="Food">Food</option><option value="Music">Music</option><option value="Electronics">Electronics</option><option value="Transport">Transport</option><option value="Rental">Rental</option>';
-    print '</select></td>';
-    print '<td><select size="12" name="radius" id="radius" class="input_form_custom">';
+    print '<td><select size="8" name="radius" id="radius" class="input_form_custom">';
     foreach $r (@radiuses) {
 	if ($c->param('radius')) {
 	    if ($c->param('radius')==$r) {
@@ -135,66 +126,71 @@ sub input_searchers {
     print '<td>&nbsp;</td><td><input type="submit" id="search" name="search" value="Go" /></td></tr></table>';
     print "<span id='status'><input type='hidden' name='glat' /><input type='hidden' name='glon' /></span>\n";
     print "</form>";
+    print "<h3>Be discovered by the world around you</h3>";
+    print "<p><a href='https://www.piperpal.com/google.html'>Submit entries in Piperpal\'s Location-aware Search Engine</a></p>";
+#    &Piperpal::input_publisher();
+#    &Piperpal::insert_publisher();
     print "<br>";
     print '<p>Mobile Browsers: <a href="http://www.brave.com/">Brave</a>, <a href="https://www.mozilla.org/firefox">Firefox</a>, <a href="http://www.vivaldi.com/">Vivaldi</a></p>';;
-    print '<p>Locations: <a href="https://www.piperpal.com/location/berkeley">Berkeley</a>, <a href="https://www.piperpal.com/location/london">London</a>, <a href="https://www.piperpal.com/location/nyc">New York City</a>, <a href="https://www.piperpal.com/location/paris">Paris</a>, <a href="https://www.piperpal.com/location/oslo">Oslo</a></p>';
+    print '<p><a href="https://www.piperpal.com/?query=&radius=5&search=Go&service=Books&glat=55.6828273&glon=12.6082921#results">Copenhagen</a>, <a href="https://www.piperpal.com/?query=&radius=5&search=Go&service=Books&glat=37.419559&glon=-122.0897767#results">Google Visitor Center</a>, <a href="https://www.piperpal.com/?query=&radius=5&search=Go&service=Books&glat=51.5073219&glon=-0.1276474#results">London</a>, <a href="https://www.piperpal.com/?query=&radius=5&search=Go&service=Books&glat=40.6399278&glon=-73.7786925#results">New York</a>, <a href="https://www.piperpal.com/?query=&radius=5&search=Go&service=Books&glat=48.8566969&glon=2.3514616#results">Paris</a>, <a href="https://www.piperpal.com/?query=&radius=5&search=Go&service=Books&glat=59.9137238&glon=10.7372622#results">Oslo</a></p>';
     print '<p>Maps: <a href="http://maps.google.com/">Google Maps</a>, <a href="http://www.openstreetmap.org/">Open Street Map</a>, <a href="https://www.bing.com/maps/">Bing Maps</a>, <a href="https://maps.apple.com/">Apple Maps</a></p>';
-    print '<h3>News</h3>';
-    print '<p><b>2021</b></p>';    
-    print '<p><i><a href="https://www.aamotsoftware.com/">Aamot Software</a>\'s second functional example of HTML with location tagging and fetching was stored on <a href="https://piperpal.com/google.html">https://piperpal.com/google.html</a></i></p>';
-    print '<p><b>2020</b></p>';
-    print '<p><i><a href="https://www.aamotsoftware.com/">Aamot Software</a>\'s Indexer for Piperpal written in the programming language Python can now recursively index location tags as specified on <a href="https://www.aamotsoftware.com/location.html">https://www.aamotsoftware.com/location.html</a> from web pages that are listed for such indexing on <a href="https://www.aamotsoftware.com/location-source.html">https://www.aamotsoftware.com/location-source.html</a></i></p>';
-    print '<p><b>2015</b></p>';    
-    print '<p><i><a href="https://www.aamotsoftware.com/">Aamot Software</a>\'s first practical example of location tagging with Piperpal was stored on <a href="https://piperpal.com/Google">https://piperpal.com/Google</a> at a lunch table with <a href="http://www.norvig.com/">Peter Norvig</a> in the Google Visitor Center in Mountain View, California in 2015 where he mentioned crowd sourcing of location tags with a neural network filter as future work.</i></p>';
-    print '<p><i><a href="https://www.aamotsoftware.com/">Aamot Software</a>\'s presentation for <a href="http://research.google.com/">Google Research</a>: <a href="https://www.piperpal.com/doc/3.0/Piperpal-Location-aware-ContentTag.pdf">Location-aware Content Tag: &lt;location&gt;,&location markup</a></p>';
 }
 
 sub input_publisher {
 
     my $c = CGI->new;
     print "<tr><td width='60'>&nbsp;</td><td><form onsubmit='updateGeo()' id='welcomeForm' name='welcomeForm' action='https://www.piperpal.com/checkout.php' method='POST'>";
-#    print '<span class="input_form">';
+    print '<span class="input_form">';
     print '<img src="img/Name_Icon.png" title="Name of Location-aware Content Tag" class="icon_form" height="70" width="70">';
     if ($c->param('query')) {
-	print '<input type="text" id="name" class="input_form_custom" name="name" placeholder="Name" value=' . $c->param('query') . ' />';
+	print '<input type="text" id="name" class="input_form_custom" name="name" placeholder="Name" value=' . HTML::Entities::encode($c->param('query')) . ' />';
     } else {
 	print '<input type="text" id="name" class="input_form_custom" name="name" placeholder="Name" />';
     }
-#    print '</span>';
+    print '</span>';
     print '</td></tr><tr><td width=60>&nbsp;</td><td>';
-#    print '<span class="input_form">';
+    print '<span class="input_form">';
     print '<img src="img/Location_Icon.png" title="URL of Location-aware Content Tag" class="icon_form" height="70" width="70">';
     print '<input type="text" id="location" class="input_form_custom" name="location" placeholder="https://">';
-#    print '</span>';
+    print '</span>';
     print '</td></tr><tr><td width=60>&nbsp;</td><td>';
- #   print '<span class="input_form">';
+   print '<span class="input_form">';
     print '<img src="img/Service_Icon.png" title="Service type of Location-aware Content Tag" class="icon_form" height="70" width="70">';
     print '</td></tr><tr><td width=60>';
     print '<input type="text" id="service" name="service" placeholder="Service">';
-#    print '<span class="row row-condensed space-top-2 space-2">
-#      <span class="col-sm-6">
-#        <label for="simple-search-tourin" class="screen-reader-only">
-#          Tour in
-#        </label>
-#        <input
-#          id="simple-search-tourin"
-#          type="text"
-#          name="notBefore"
-#          class="input-large tourin js-search-tourin"
-#          placeholder="Not Before">
-#      </span>
-#      <span class="col-sm-6">
-#        <label for="simple-search-tourout" class="screen-reader-only">
-#          Tour out
-#          </label>
-#        <input
-#          id="simple-search-tourout"
-#          type="text"
-#          name="notAfter"
-#          class="input-large tourout js-search-tourout"
-#          placeholder="Not After">
-#      </span>
-#    </span>';
+    # print '<h3>News</h3>';
+    #print '<p><b>2021</b></p>';    
+    #print '<p><i><a href="https://www.aamotsoftware.com/">Aamot Software</a>\'s second functional example of HTML with location tagging and fetching was stored on <a href="https://piperpal.com/google.html">https://piperpal.com/google.html</a></i></p>';
+    #print '<p><b>2020</b></p>';
+    #print '<p><i><a href="https://www.aamotsoftware.com/">Aamot Software</a>\'s Indexer for Piperpal written in the programming language Python can now recursively index location tags as specified on <a href="https://www.aamotsoftware.com/location.html">https://www.aamotsoftware.com/location.html</a> from web pages that are listed for such indexing on <a href="https://www.aamotsoftware.com/location-source.html">https://www.aamotsoftware.com/location-source.html</a></i></p>';
+    #print '<p><b>2015</b></p>';    
+    #print '<p><i><a href="https://www.aamotsoftware.com/">Aamot Software</a>\'s first practical example of location tagging with Piperpal was stored on <a href="https://piperpal.com/Google">https://piperpal.com/Google</a> at a lunch table with <a href="http://www.norvig.com/">Peter Norvig</a> in the Google Visitor Center in Mountain View, California in 2015 where he mentioned crowd sourcing of location tags with a neural network filter as future work.</i></p>';
+    #print '<p><i><a href="https://www.aamotsoftware.com/">Aamot Software</a>\'s presentation for <a href="http://research.google.com/">Google Research</a>: <a href="https://www.piperpal.com/doc/3.0/Piperpal-Location-aware-ContentTag.pdf">Location-aware Content Tag: &lt;location&gt;,&location markup</a></p>';
+
+    print '<span class="row row-condensed space-top-2 space-2">
+	<span class="col-sm-6">
+        <label for="simple-search-tourin" class="screen-reader-only">
+	Tour in
+        </label>
+        <input
+	id="simple-search-tourin"
+          type="text"
+          name="notBefore"
+          class="input-large tourin js-search-tourin"
+          placeholder="Not Before">
+      </span>
+      <span class="col-sm-6">
+        <label for="simple-search-tourout" class="screen-reader-only">
+          Tour out
+          </label>
+        <input
+          id="simple-search-tourout"
+          type="text"
+          name="notAfter"
+          class="input-large tourout js-search-tourout"
+          placeholder="Not After">
+      </span>
+    </span>';
   #  print '</span>';
     print "<span id='status_publisher'>\n";
 #    print "<span class='input_form_custom'>";
@@ -204,11 +200,11 @@ sub input_publisher {
     print "</span>\n";
     print "<input type='hidden' name='c' value='INSERT' />\n";
     print '<span class="send_form">';
-    print "<script src='https://checkout.stripe.com/checkout.js' class='stripe-button' data-key='pk_live_9UbKhDJJWaAFnMjYQTBA8I9i00H8Z5eMmL' data-amount='45' data-name='Aamot Software' data-description='Piperpal Entry ($0.45 USD)' data-image='/img/Location_Icon.png'></script>";
+    print "<script src='https://checkout.stripe.com/checkout.js' class='stripe-button' data-key='pk_live_9UbKhDJJWaAFnMjYQTBA8I9i00H8Z5eMmL' data-amount='41' data-name='Aamot Software' data-description='Piperpal Entry ($0.41 USD)' data-image='/img/Location_Icon.png'></script>";
     # print '<input class="custom_send_button" type="submit" value="PAY WITH CARD">';
     print '</span>';
     print '</form>';
-    print '</td></tr></table>';
+    print '</td></tr>';
     
 #    print "<input type='hidden' name='c' value='INSERT' />\n";
 #    print "<table cellpadding=5><tr>";
@@ -290,7 +286,7 @@ sub lns_item {
 #    print "print longpoint.value;";
 #    print "</script>";
 #    print "111.045*DEGREES(ACOS(COS(RADIANS(latpoint))*COS(RADIANS(glat))*COS(RADIANS(longpoint)-RADIANS(glon))+SIN(RADIANS(latpoint))*SIN(RADIANS(glat))))";
-    print "<table>";
+    print "<table valign='left'>";
     print "<tr><td width='60'>";
     print '<a href="/' . $name . '"><img src="/img/Name_Icon.png" title="Name of Location-aware Content Tag" height="70" width="70"></a>';
     print '</td><td><input type="text" id="' . $name .'" name="name" placeholder="Name" value="' . $name . '"></td></tr>';
@@ -422,7 +418,7 @@ sub lns_market_item {
     print "</td></tr><tr><td width='60'>";        
     print '<a href="/service/' . $service . '"><img src="/img/Service_Icon.png" title="Service type of Location-aware Content Tag" height="70" width="70"></a></td><td>';
     print '<input type="text" id="' . $name . '_service' . '" name="service" placeholder="Service" value="' . $service . '">';
-    print '<input type="hidden" id="paid_' . $name . '_service' . '" name="paid" placeholder="paid" value="45">';
+    print '<input type="hidden" id="paid_' . $name . '_service' . '" name="paid" placeholder="paid" value="42">';
     print "</td></tr><tr><td width='60'></td><td>";            
 #    print '<span class="row row-condensed space-top-2 space-2">
 #      <span class="col-sm-6">
@@ -521,7 +517,7 @@ sub is_paid {
     my $c = CGI->new;
     my $dbh = DBI->connect("DBI:mysql:database=piperpal;host=piperpal.mysql.domeneshop.no", "piperpal", "xxxxxxxx", {'RaiseError' => 1});
     if ('GET' eq $c->request_method && $c->param('paid') eq "1" && $c->param('query') && $c->param('location')) {
-	$dbh->do ("UPDATE piperpal SET paid = paid + 1, modified = NOW() WHERE name = '" . $c->param('query') . "' and location = '" . $c->param('location') . "';");
+	$dbh->do ("UPDATE piperpal SET paid = paid + 1, modified = NOW() WHERE name = '" . HTML::Entities::encode($c->param('query')) . "' and location = '" . $c->param('location') . "';");
     }
     return;
 }
@@ -644,7 +640,7 @@ sub update_location {
     my $dbh = DBI->connect("DBI:mysql:database=piperpal;host=piperpal.mysql.domeneshop.no", "piperpal", "xxxxxxxx", {'RaiseError' => 1});
 #    $dbh->{'mysql_enable_utf8'} = 1;
     if ($c->param('query')) {
-	my $sth = $dbh->prepare ("SELECT name,location,service FROM piperpal WHERE (name LIKE '%" . $c->param('query') . "%' OR service LIKE '%" . $c->param('query') . "%') AND paid > '0' ORDER by modified DESC;");
+	my $sth = $dbh->prepare ("SELECT name,location,service FROM piperpal WHERE (name LIKE '%" . HTML::Entities::encode($c->param('query')) . "%' OR service LIKE '%" . HTML::Entities::encode($c->param('query')) . "%') ORDER by modified DESC;");
 	$sth->execute();
 	while (my $ref = $sth->fetchrow_hashref()) {
 	    my @tags = ($ref->{'name'} =~ m/&(\w+)/g);
@@ -668,7 +664,7 @@ sub insert_advertiser {
 #    $dbh->{'mysql_enable_utf8'} = 1;
     if ('GET' eq $c->request_method && $c->param('c') eq "INSERT" && $c->param('query') && $c->param('location') && $c->param('service')) {
 	
-	my $sth = $dbh->prepare ("UPDATE piperpal SET location = '" . $c->param('location') . "', name = '" . $c->param('query') . "', service = '" . $c->param('service') . "' = '" . $c->param('location') . "', service = '" . $c->param('service') . " WHERE name = '" . $c->param('query') . "';");
+	my $sth = $dbh->prepare ("UPDATE piperpal SET location = '" . $c->param('location') . "', name = '" . HTML::Entities::encode($c->param('query')) . "', service = '" . $c->param('service') . "' = '" . $c->param('location') . "', service = '" . $c->param('service') . " WHERE name = '" . HTML::Entities::encode($c->param('query')) . "';");
 	$sth->execute();
 	while (my $ref = $sth->fetchrow_hashref()) {
 	    if (is_paid($ref->{'location'})) {
@@ -698,7 +694,7 @@ sub select_publisher {
 #    my $fn = "/home/4/p/piperpal/pull.csv";
 #    my $string = "pull:" . $ENV{'REMOTE_ADDR'} . ":" . $q . "\n";    
     if ($c->param('query')) {
-	$q = $c->param('query');
+	$q = HTML::Entities::encode($c->param('query'));
 #	open(FH, '>', $fn) or die $!;
 #	print FH $string;
 #	print $fp;
@@ -732,8 +728,8 @@ sub select_publisher {
     }
     my $dbh = DBI->connect("DBI:mysql:database=piperpal;host=piperpal.mysql.domeneshop.no", "piperpal", "xxxxxxxx", {'RaiseError' => 1});
 #    $dbh->{'mysql_enable_utf8'} = 1;
-    my $query = "SELECT name,location,service,glat,glon,modified,created,paid,token,type,email FROM piperpal WHERE (name LIKE '%" . $c->param('query') . "%' OR service LIKE '%" . $c->param('query') . "%') AND paid > '0' ORDER by modified DESC;";
-    $query = "SELECT DISTINCT id,name,service,location,modified,created,glat,glon,paid,token,type,email,111.045*DEGREES(ACOS(COS(RADIANS(latpoint))*COS(RADIANS(glat))*COS(RADIANS(longpoint)-RADIANS(glon))+SIN(RADIANS(latpoint))*SIN(RADIANS(glat)))) AS distance_in_km FROM piperpal JOIN (SELECT  " . $latitude . "  AS latpoint, " . $longitude . " AS longpoint) AS p ON 1=1 WHERE paid > '0' AND (name LIKE '%" . $c->param('query') . "%' AND service LIKE '%" . $s . "%') HAVING distance_in_km < " . $r . " ORDER BY distance_in_km ASC, modified DESC";
+    my $query = "SELECT name,location,glat,glon,modified,created,paid,token,type,email FROM piperpal WHERE (name LIKE '%" . HTML::Entities::encode($c->param('query')) . "%') ORDER by modified DESC;";
+    $query = "SELECT DISTINCT id,name,location,service,modified,created,glat,glon,paid,token,type,email,111.045*DEGREES(ACOS(COS(RADIANS(latpoint))*COS(RADIANS(glat))*COS(RADIANS(longpoint)-RADIANS(glon))+SIN(RADIANS(latpoint))*SIN(RADIANS(glat)))) AS distance_in_km FROM piperpal JOIN (SELECT  " . $latitude . "  AS latpoint, " . $longitude . " AS longpoint) AS p ON 1=1 WHERE (name LIKE '%" . HTML::Entities::encode($c->param('query')) . "%') HAVING distance_in_km < " . $r . " ORDER BY distance_in_km ASC, modified DESC";
     my $sth = $dbh->prepare ($query);
     $sth->execute();
     print "<table>";
@@ -741,7 +737,7 @@ sub select_publisher {
 	print "<tr><td width='60'>&nbsp;</td><td>";
 	print "<form onsubmit='updateGeo()' method='GET' action='https://www.piperpal.com/cft/s/' id='formID'>";		
 	lns_market_item($ref->{'name'}, $ref->{'location'}, $ref->{'service'}, $ref->{'glat'}, $ref->{'glon'}, $ref->{'modified'}, $ref->{'created'}, $ref->{'distance_in_km'});
-	print "<input type='submit' value='Buy Location for " . $ref->{'name'} . "'/>";	
+	print "<input type='submit' value='Buy Location for " . $ref->{'name'} . "'/>";
 	print "</form>";
 	print "</td></tr>";
     }
@@ -761,7 +757,7 @@ sub select_location {
 #    my $fn = "/home/4/p/piperpal/pull.csv";
 #    my $string = "pull:" . $ENV{'REMOTE_ADDR'} . ":" . $q . "\n";    
     if ($c->param('query')) {
-	$q = $c->param('query');
+	$q = HTML::Entities::encode($c->param('query'));
 #	open(FH, '>', $fn) or die $!;
 #	print FH $string;
 #	print $fp;
@@ -790,7 +786,7 @@ sub select_location {
 #    my $dbh = DBI->connect("DBI:mysql:database=piperpal;host=piperpal.mysql.domeneshop.no", "piperpal", "xxxxxxxx", {'RaiseError' => 1});
 #    $dbh->{'mysql_enable_utf8'} = 1;
     #my $sth = $dbh->prepare ("SELECT DISTINCT id,name,service,location,modified,created,glat,glon,paid,token,type,email,111.045*DEGREES(ACOS(COS(RADIANS(latpoint))*COS(RADIANS(glat))*COS(RADIANS(longpoint)-RADIANS(glon))+SIN(RADIANS(latpoint))*SIN(RADIANS(glat)))) AS distance_in_km FROM piperpal JOIN (SELECT  " . $latitude . "  AS latpoint, " . $longitude . " AS longpoint) AS p ON 1=1 WHERE paid > '0' AND name LIKE '%" . $q . "%' HAVING distance_in_km < " . $r . " ORDER BY distance_in_km");
-    my $sth = $dbh->prepare ("SELECT DISTINCT name,location,service,glat,glon,modified,created,paid,token,type,email FROM piperpal WHERE modified < NOW() and created > NOW() AND paid > '0' ORDER by modified DESC, name ASC;");
+    my $sth = $dbh->prepare ("SELECT DISTINCT name,location,service,glat,glon,modified,created,paid,token,type,email FROM piperpal WHERE modified < NOW() and created > NOW() ORDER by modified DESC, name ASC;");
     $sth->execute();
     while (my $ref = $sth->fetchrow_hashref()) {
 	#print "<h3><a href='https://piperpal.com/" . $ref->{'name'}  . "'>" . $ref->{'name'} . "</a></h3>";
@@ -811,14 +807,14 @@ sub select_market {
     my $latitude;
     my $longitude;
     if ($c->param('query')) {
-	$q = $c->param('query');
+	$q = HTML::Entities::encode($c->param('query'));
     } else {
 	$q = "GoogleVisitorCenter";
     }
     if ($c->param('radius')) {
 	$r = $c->param('radius');
     } else {
-	$r = 1;
+	$r = 25;
     }
     if ($c->param('glat')) {
 	$latitude = $c->param('glat');
@@ -833,7 +829,7 @@ sub select_market {
     my $dbh = DBI->connect("DBI:mysql:database=piperpal;host=piperpal.mysql.domeneshop.no", "piperpal", "xxxxxxxx", {'RaiseError' => 1});
 #    $dbh->{'mysql_enable_utf8'} = 1;
     my $query = "SELECT name,location,service,glat,glon,modified,created,paid,token,type,email FROM piperpal WHERE (name LIKE '%" . $q . "%' OR service LIKE '%" . $q . "%') AND paid > '0' ORDER by modified;";
-    $query = "SELECT DISTINCT id,name,service,location,modified,created,glat,glon,paid,token,type,email,111.045*DEGREES(ACOS(COS(RADIANS(latpoint))*COS(RADIANS(glat))*COS(RADIANS(longpoint)-RADIANS(glon))+SIN(RADIANS(latpoint))*SIN(RADIANS(glat)))) AS distance_in_km FROM piperpal JOIN (SELECT  " . $latitude . "  AS latpoint, " . $longitude . " AS longpoint) AS p ON 1=1 WHERE paid > '0' AND (name LIKE '%" . $q . "%' OR service LIKE '%" . $q . "%') HAVING distance_in_km < " . $r . " ORDER BY distance_in_km,modified";
+    $query = "SELECT DISTINCT id,name,location,modified,created,glat,glon,paid,token,type,email,111.045*DEGREES(ACOS(COS(RADIANS(latpoint))*COS(RADIANS(glat))*COS(RADIANS(longpoint)-RADIANS(glon))+SIN(RADIANS(latpoint))*SIN(RADIANS(glat)))) AS distance_in_km FROM piperpal JOIN (SELECT  " . $latitude . "  AS latpoint, " . $longitude . " AS longpoint) AS p ON 1=1 WHERE (name LIKE '%" . $q . "%') HAVING distance_in_km < " . $r . " ORDER BY distance_in_km,modified";
     my $sth = $dbh->prepare ($query);
     $sth->execute();
 #    print "</td></tr></table><table><tr><td>";
@@ -841,7 +837,7 @@ sub select_market {
 	print "<form onsubmit='updateGeo()' id='lnsForm' name='lnsForm' action='https://www.piperpal.com/checkout.php' method='POST'>";
 #	print "<table><tr><td width='60'>&nbsp;</td><td>";
 	lns_market_item($ref->{'name'}, $ref->{'location'}, $ref->{'service'}, $ref->{'glat'}, $ref->{'glon'}, $ref->{'modified'}, $ref->{'created'}, $ref->{'distance_in_km'});
-	print "<input type='submit' value='Buy Location for " . $ref->{'name'} . "'/>";	
+	print "<input type='submit' value='Buy Location for " . $ref->{'name'} . "'/>";
 #	print "</td></tr></table>";
 	print "</form>";
     }

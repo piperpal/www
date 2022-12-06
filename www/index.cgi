@@ -24,6 +24,41 @@ print <<EOF;
 <!DOCTYPE html>
 <html lang="en">
     <head>
+    <style>
+    #name label{
+    display: inline-block;
+    width: 100px;
+    text-align: right;
+    }
+    #name_submit{
+    padding-left: 100px;
+    }
+    #name div{
+    margin-top: 1em;
+    }
+    textarea{
+    vertical-align: top;
+    height: 5em;
+    }
+
+    .error{
+    display: none;
+    margin-left: 10px;
+    }
+
+    .error_show{
+    color: red;
+    margin-left: 10px;
+    }
+
+    input.invalid, textarea.invalid{
+    border: 2px solid red;
+    }
+
+    input.valid, textarea.valid{
+    border: 2px solid green;
+    }
+    </style>
     <meta property="al:android:app_name" content="Piperpal" />
     <meta property="al:android:package" content="com.piperpal.api.android" />
     <meta property="al:android:url" content="https://www.piperpal.com/Android" />
@@ -120,7 +155,7 @@ function submit() {
 
     <script type="text/javascript" src="https://www.piperpal.com/jquery-1.9.1.min.js"></script>
     <script type="text/javascript" src="https://www.piperpal.com/jquery.autocomplete.min.js"></script>
-    <!-- FIXME 
+    <!-- FIXME
     <script type="text/javascript" src="https://www.piperpal.com/piperpal-autocomplete.php"></script>
     <script type="text/javascript" src="https://www.piperpal.com/piperpal-autocomplete-names.php"></script>
     <script type="text/javascript" src="https://www.piperpal.com/piperpal-autocomplete-services.php"></script>
@@ -137,6 +172,7 @@ function submit() {
     <meta name="viewport" content="user-scalable=yes, initial-scale=1.0, maximum-scale=3, minimum-scale=0.5, width=device-width">	    
     </head>
     <body style="background: #ffffff;" onload="document.getElementById('query').focus();">
+
     <!--
     <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=true"></script>-->
     <!--script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"--><!--/script-->
@@ -246,20 +282,34 @@ if (navigator.geolocation) {
 EOF
 
 print "<tr><td valign='top' width='100%' align='center'>";
-print "<h3>Discover the world around you in <span id='countdowntimer'>45 </span> seconds</h3>";
+#print "<h3>Discover the world around you in <span id='countdowntimer'></span> seconds</h3>";
 print "<script type='text/javascript'>";
-print "    var timeleft = 45;";
-print "    var downloadTimer = setInterval(function() {";
-print "   timeleft--;";
-print "    document.getElementById('countdowntimer').textContent = timeleft;";
-print "    if(timeleft <= 0)";
-print "        clearInterval(downloadTimer);";
-print "    },1000);";
+print "function increase(){";
+print "            var counterElement = document.getElementById(\"countdowntimer\");";
+print "            var counter = counterElement.textContent;";
+print "            counter++;";
+print "            counterElement.innerHTML = counter;";
+print "        }";
+print "        window.onload = increase;";
 print "</script>";
-print "<h4>12 Million Locations near you</h4>";
+print "<h4>12 Million Locations at Your Fingertips</h4>";
+print "<label for=\"countdowntimer\">Location Search progress</label>";
+print "<progress id=\"countdowntimer\" max=\"50\">10%</progress>";
+print "<script type=\"text/javascript\" src=\"https://api.piperpal.com/location/json.php?service=Restaurant&glat=' + position.coords.longitude + '&glon=' + position.coords.longitude + '\"></script>\n";
+print "<script language=\"JavaScript\">\n";
+print "var obj = JSON.parse(locations);\n";
+print "for (i=0; i < obj.locations.length; i++) {\n";
+print "document.write(\"<h1>\" + obj.locations[i].name + \"</h1><h2><a href='\" + obj.locations[i].location + \"'>\" + obj.locations[i].location + \"</a> (\" + obj.locations[i].distance + \")</h2><h3>\" + \" \" + obj.locations[i].service + \" \" + \"</h3>\n\");\n";
+print "<!--document.write(\"<p>\" + obj.locations[i].distance + \"</p><form method='GET' action='/search.php#results'><input type='text' name='name' placeholder='' value='\" + obj.locations[i].name + \"'/><input type='hidden' name='glat' value='\" + obj.locations[i].glat + \"' /><input type='hidden' name='glon' value='\" + obj.locations[i].glon + \"'/><span id='geopher'></span><select name='service'><option value='Food'>Food</option><option selected value='Search'>Search</option></select><input type='submit' value='Search' /><br />\"); -->\n";
+print "}\"\n";
+print "</script>\n";
 print "<p>We know where you are.  Now, tell us what you are looking for.</p>\n";
-# print "<h3>Available in Year 2020</h3>";
+print "<h3>It\'s not where you\'re from, it\'s where you\'re at</h3>";
+print "<p><a href=\"https://www.piperpal.com/tutorial/\">Piperpal 4.0 Tutorial</a></p>";
+# print "<p>The Piperpal implementation of Location Search for World Wide Web<br />is described in <a href=\"https://www.piperpal.com/thesis.pdf\">https://www.piperpal.com/thesis.pdf</a> ready for 2026.</p>";
 &Piperpal::input_searchers($c);
+print "<a name='results'><a href=\"https://www.piperpal.com/\"><img src='/piperpal.png' alt='piperpal.com Logo' width=\"320\" align=center/></a><br />
+<h3><a href=\"https://www.piperpal.com/\">Location Search Results</a></h3></a>";
 &Piperpal::select_publisher();
 print "<br />";
 print "<br />";
@@ -269,7 +319,7 @@ print "<br />";
 print "<p>You could markup with &lt;location&gt; tag in <a href='https://www.w3.org/wiki/HTML/next#.3Clocation.3E_element_.28like_.29_for_expressing_geo_information.2C_eg_with_attributes_lat.2C_long.2C_altitude'>HTML</a><br />";
 print "<a href=\"https://www.aamotsoftware.com/location.html\">https://www.aamotsoftware.com/location.html</a></p>";
 print "<p><a href=\'https://www.stripe.com/\'><img alt=\'Powered by stripe\' src=\'/powered_by_stripe.png\'></a>&nbsp;<a href=\'https://play.google.com/store/apps/details?id=com.piperpal.api.android&pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'><img alt='Get it on Google Play\' src=\'/google-piperpal.png\'/></a></p>";
-print "<p>Copyright &copy; 2015-2021  <location name='Aamot Software' href='https://www.aamotsoftware.com/' lat='37.4219999' lon='-122.0862462' service='Electronics'>Aamot Software</location><br /><location name='Piperpal' href='https://www.piperpal.com/' lat='59.94215220' lon='10.71697530' service='Crawler'>Oslo, Norway</location> - <location name='Piperpal' href='https://www.piperpal.com/' lat='37.879015' lon='-122.262425' service='Crawler'>Berkeley, California, USA</location></p>";
+print "<p>Copyright &copy; 2015-2022  <location name='Aamot Software' href='https://www.aamotsoftware.com/' lat='37.4219999' lon='-122.0862462' service='Electronics'>Aamot Software</location><br /><location name='Piperpal' href='https://www.piperpal.com/' lat='59.94215220' lon='10.71697530' service='Crawler'>Oslo, Norway</location> - <location name='Piperpal' href='https://www.piperpal.com/' lat='37.879015' lon='-122.262425' service='Crawler'>Berkeley, California, USA</location></p>";
 #print "<h2>Wikipedia Location-aware Content</h2>";
 #&Piperpal::insert_wikipedia();
 #print "</td></tr><tr><td valign='top' width=512>";
@@ -278,14 +328,16 @@ print "<p>Copyright &copy; 2015-2021  <location name='Aamot Software' href='http
 #&Piperpal::input_publisher();
 #&Piperpal::insert_publisher();
 print '<h3>News</h3>';
+print '<p><b>2022</b></p>';
+print '<p><a href="https://www.aamotsoftware.com/">Aamot Software</a>\'s Location Entries can be ordered for $0.42 USD per location at <a href="https://www.piperpal.com/google.html">https://www.piperpal.com/google.html</a>';
 print '<p><b>2021</b></p>';    
-print '<p><i><a href="https://www.aamotsoftware.com/">Aamot Software</a>\'s second functional example of HTML with location tagging and fetching was stored on <a href="https://piperpal.com/google.html">https://piperpal.com/google.html</a></i></p>';
+print '<p><a href="https://www.aamotsoftware.com/">Aamot Software</a>\'s second functional example of HTML with location tagging and fetching was stored on <a href="https://piperpal.com/google.html">https://piperpal.com/google.html</a></p>';
 print '<p><b>2020</b></p>';
-print '<p><i><a href="https://www.aamotsoftware.com/">Aamot Software</a>\'s Indexer for Piperpal written in the programming language Python can now recursively index location tags as specified on <a href="https://www.aamotsoftware.com/location.html">https://www.aamotsoftware.com/location.html</a> from web pages that are listed for such indexing on <a href="https://www.aamotsoftware.com/location-source.html">https://www.aamotsoftware.com/location-source.html</a></i></p>';
+print '<p><a href="https://www.aamotsoftware.com/">Aamot Software</a>\'s Indexer for Piperpal written in the programming language Python can now recursively index location tags as specified on <a href="https://www.aamotsoftware.com/location.html">https://www.aamotsoftware.com/location.html</a> from web pages that are listed for such indexing on <a href="https://www.aamotsoftware.com/location-source.html">https://www.aamotsoftware.com/location-source.html</a></p>';
 print '<p><b>2015</b></p>';    
-print '<p><i><a href="https://www.aamotsoftware.com/">Aamot Software</a>\'s first practical example of location tagging with Piperpal was stored on <a href="https://piperpal.com/Googleplex">https://piperpal.com/Googleplex</a> at a lunch table with <a href="http://www.norvig.com/">Peter Norvig</a> in the Googleplex in Mountain View, California in 2015 where he mentioned crowd sourcing of location tags with a neural network filter as future work.</i></p>';
-print '<p><i><a href="https://www.aamotsoftware.com/">Aamot Software</a>\'s presentation for <a href="http://research.google.com/">Google Research</a>: <a href="https://www.piperpal.com/doc/3.0/Piperpal-Location-aware-ContentTag.pdf">Location-aware Content Tag: &lt;location&gt;,&location markup</a></p>';
-#<tr><td width=60>&nbsp;</td><td><p>Copyright &copy; 2015-2018 <a href='http://www.aamotsoftware.com/'>Ole Aamot Software</a>";
+print '<p><a href="https://www.aamotsoftware.com/">Aamot Software</a>\'s first practical example of location tagging with Piperpal was stored on <a href="https://piperpal.com/Googleplex">https://piperpal.com/Googleplex</a> at a lunch table with <a href="http://www.norvig.com/">Peter Norvig</a> in the Googleplex in Mountain View, California in 2015 where he mentioned crowd sourcing of location tags with a neural network filter as future work.</p>';
+print '<p><a href="https://www.aamotsoftware.com/">Aamot Software</a>\'s presentation for <a href="http://research.google.com/">Google Research</a>: <a href="https://www.piperpal.com/doc/3.0/Piperpal-Location-aware-ContentTag.pdf">Location-aware Content Tag: &lt;location&gt;,&location markup</a></p>';
+#<tr><td width=60>&nbsp;</td><td><p>Copyright &copy; 2015-2022 <a href='http://www.aamotsoftware.com/'>Ole Aamot Software</a>";
 print "</td></tr></table>\n";
 #print "<p>Copyright &copy; 2018 <a href=\"https://www.aamotsoftware.com/\">Ole Aamot Software</a></p>";
 print "</body>\n</html>\n";
