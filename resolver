@@ -61,12 +61,12 @@ def haversine(lat1, lon1, lon2, lat2):
 
 def gindex(radius,n,d,l,query,my_lat,my_lon,lat,lon):
     return radius,n,d,l,query,my_lat,my_lon,lat,lon
-services = dict()
-services = ('Restaurant','Bar','Concert','Film','Books','Health','Clothes','Food','Music','Electronics','Transport','Rental')
+maps = dict()
+maps = ('Restaurant','Bar','Concert','Film','Books','Health','Clothes','Food','Music','Electronics','Transport','Rental')
 http = urllib3.PoolManager()
 q = 'Wikipedia'
 p = 1
-l = 'http://www.piperpal.com/piperpal.xml';
+l = 'https://aamot.software/piperpal.xml';
 lat = '37.42242500'
 lon = '-122.08755550'
 service = 'Books'
@@ -74,8 +74,52 @@ for x in range(-90, 91):
     for y in range(-180, 181):
            print x,y,lat,lon,q,l,0
            print x,y,lat,lon,q,l,1
-           for z in services:
-#                if (z=="Restaurant"):
-   		 print z,x,y,lat,lon,q,l,1
-#                 print "Restaurant"
-		 piperpal_resolver(l,1,z,lat,lon)
+           for z in maps:
+                if (z=="Restaurant"):
+                   print z,x,y,lat,lon,q,l,1
+                   #print z
+                   piperpal_resolver(l,1,z,lat,lon)
+                if (z=="Bar"):
+                   print z,x,y,lat,lon,q,l,1
+                   #print z
+                   piperpal_resolver(l,1,z,lat,lon)
+                if (z=="Concert"):
+                   print z,x,y,lat,lon,q,l,1
+                   #print z
+                   piperpal_resolver(l,1,z,lat,lon)
+                if (z=="Film"):
+                   print z,x,y,lat,lon,q,l,1
+                   #print z
+                   piperpal_resolver(l,1,z,lat,lon)
+                if (z=="Books"):
+                   print z,x,y,lat,lon,q,l,1
+                   #print z
+                   piperpal_resolver(l,1,z,lat,lon)
+                if (z=="Health"):
+                   print z,x,y,lat,lon,q,l,1
+                   #print z
+                   piperpal_resolver(l,1,z,lat,lon)
+                if (z=="Clothes"):
+                   print z,x,y,lat,lon,q,l,1
+                   #print z
+                   piperpal_resolver(l,1,z,lat,lon)
+                if (z=="Food"):
+                   print z,x,y,lat,lon,q,l,1
+                   #print z
+                   piperpal_resolver(l,1,z,lat,lon)
+                if (z=="Music"):
+                   print z,x,y,lat,lon,q,l,1
+                   #print z
+                   piperpal_resolver(l,1,z,lat,lon)
+                if (z=="Electronics"):
+                   print z,x,y,lat,lon,q,l,1
+                   #print z
+                   piperpal_resolver(l,1,z,lat,lon)
+                if (z=="Transport"):
+                   print z,x,y,lat,lon,q,l,1
+                   #print z
+                   piperpal_resolver(l,1,z,lat,lon)
+                if (z=="Rental"):
+                   print z,x,y,lat,lon,q,l,1
+                   #print z
+                   piperpal_resolver(l,1,z,lat,lon)
