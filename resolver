@@ -1,5 +1,6 @@
-# Written by Ole Aamot, 20200409
-
+#!/usr/bin/python
+# Written by Ole Aamot, 20240113
+#
 from cgi import parse_qs, escape
 from urllib import quote_plus
 import cgi
@@ -23,6 +24,8 @@ def piperpal_resolver(l,n,s,lat,lon):
     i = 0
     print locationtags
     while (i < len(locationtags)):
+        notbefore = y.findAll("location")[i]["notbefore"]
+        notafter = y.findAll("location")[i]["notafter"]
         name = y.findAll("location")[i]["name"]
         glat = y.findAll("location")[i]["lat"]
         glon = y.findAll("location")[i]["lon"]
@@ -32,7 +35,7 @@ def piperpal_resolver(l,n,s,lat,lon):
         r = haversine(float(glat),float(glon),float(lat),float(lon))
 #        print map
         print(gindex(r,name,m,href,data,glat,glon,lat,lon))
-	linker = 'https://api.piperpal.com/resolver/?name=' + quote_plus(name.encode('utf-8'), safe=':/') + '&service=' + quote_plus(service.encode('utf-8'), safe=':/') + '&location=' + quote_plus(href.encode('utf-8'), safe=':/') + '&glat=' + glat + '&glon=' + glon + '&paid=1'
+	linker = 'https://api.piperpal.com/resolver/?name=' + quote_plus(name.encode('utf-8'), safe=':/') + '&service=' + quote_plus(service.encode('utf-8'), safe=':/') + '&location=' + quote_plus(href.encode('utf-8'), safe=':/') + '&glat=' + glat + '&glon=' + glon + '&notBefore=' + notbefore + '&notAfter=' + notafter + '&paid=1'
 	insert = http.request('GET', linker)
 	print linker
 	print insert
@@ -66,7 +69,7 @@ maps = ('Restaurant','Bar','Concert','Film','Books','Health','Clothes','Food','M
 http = urllib3.PoolManager()
 q = 'Wikipedia'
 p = 1
-l = 'https://aamot.software/piperpal.xml';
+l = 'https://www.piperpal.com/piperpal.xml';
 lat = '37.42242500'
 lon = '-122.08755550'
 service = 'Books'

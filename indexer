@@ -1,5 +1,6 @@
-# Written by Ole Aamot, 20220501
-
+#!/usr/bin/python
+# Written by Ole Aamot, 20240114
+#
 from cgi import parse_qs, escape
 from urllib import quote_plus
 import cgi
